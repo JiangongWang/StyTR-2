@@ -48,6 +48,33 @@ class FlatFolderDataset(data.Dataset):
     def name(self):
         return 'FlatFolderDataset'
 
+class ALLFolderDataset(FlatFolderDataset):
+    def __init__(self, root, transform):
+        super(ALLFolderDataset, self).__init__(root, transform)
+        flist = []
+        def getFlist(path):
+            lsdir = os.listdir(path)
+            dirs = [i for i in lsdir if os.path.isdir(os.path.join(path, i))]
+            if dirs:
+                for i in dirs:
+                    getFlist(os.path.join(path, i))
+            files = [os.path.join(path, i) for i in lsdir \
+                if os.path.isfile(os.path.join(path, i)) and i.endswith(('.jpg', '.png'))]
+            for file in files:
+                flist.append(file)
+            return flist
+        self.paths = getFlist(self.root)
+        print(self.__len__())
+    def __getitem__(self, index):
+        path = self.paths[index]
+        img = Image.open(str(path)).convert('RGB')
+        img = self.transform(img)
+        return img
+    def __len__(self):
+        return len(self.paths)
+    def name(self):
+        return 'ALLFolderDataset'
+
 def adjust_learning_rate(optimizer, iteration_count):
     """Imitating the original implementation"""
     lr = 2e-4 / (1.0 + args.lr_decay * (iteration_count - 1e4))
@@ -118,8 +145,8 @@ style_tf = train_transform()
 
 
 
-content_dataset = FlatFolderDataset(args.content_dir, content_tf)
-style_dataset = FlatFolderDataset(args.style_dir, style_tf)
+content_dataset = ALLFolderDataset(args.content_dir, content_tf)
+style_dataset = ALLFolderDataset(args.style_dir, style_tf)
 
 content_iter = iter(data.DataLoader(
     content_dataset, batch_size=args.batch_size,
