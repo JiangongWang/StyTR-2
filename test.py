@@ -29,8 +29,7 @@ def test_transform(size, crop):
 def style_transform(h,w):
     k = (h,w)
     size = int(np.max(k))
-    print(type(size))
-    transform_list = []    
+    transform_list = []
     transform_list.append(transforms.CenterCrop((h,w)))
     transform_list.append(transforms.ToTensor())
     transform = transforms.Compose(transform_list)
@@ -43,7 +42,19 @@ def content_transform():
     transform = transforms.Compose(transform_list)
     return transform
 
-  
+flist = []
+def getFlist(path):
+    global flist
+    lsdir = os.listdir(path)
+    dirs = [i for i in lsdir if os.path.isdir(os.path.join(path, i))]
+    if dirs:
+        for i in dirs:
+            getFlist(os.path.join(path, i))
+    files = [os.path.join(path, i) for i in lsdir \
+        if os.path.isfile(os.path.join(path, i)) and i.endswith(('.jpg', '.png'))]
+    for file in files:
+        flist.append(file)
+    return flist
 
 parser = argparse.ArgumentParser()
 # Basic options
@@ -80,7 +91,7 @@ args = parser.parse_args()
 content_size=512
 style_size=512
 crop='store_true'
-save_ext='.jpg'
+save_ext='.png'
 output_path=args.output
 preserve_color='store_true'
 alpha=args.a
@@ -88,21 +99,21 @@ alpha=args.a
 
 
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Either --content or --content_dir should be given.
 if args.content:
     content_paths = [Path(args.content)]
 else:
-    content_dir = Path(args.content_dir)
-    content_paths = [f for f in content_dir.glob('*')]
+    flist = []
+    content_paths = getFlist(args.content_dir)
 
 # Either --style or --style_dir should be given.
 if args.style:
     style_paths = [Path(args.style)]    
 else:
-    style_dir = Path(args.style_dir)
-    style_paths = [f for f in style_dir.glob('*')]
+    flist = []
+    style_paths = getFlist(args.style_dir)
 
 if not os.path.exists(output_path):
     os.mkdir(output_path)
@@ -170,7 +181,7 @@ for content_path in content_paths:
         content = content.to(device).unsqueeze(0)
         
         with torch.no_grad():
-            output= network(content,style)       
+            output, _, _, _, _= network(content,style) 
         output = output.cpu()
                 
         output_name = '{:s}/{:s}_stylized_{:s}{:s}'.format(
