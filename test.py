@@ -185,10 +185,16 @@ for content_path in content_paths:
             output, _, _, _, _= network(content,style)
         output = output.cpu().squeeze(0)
 
-        output_name = '{:s}/{:s}_stylized_{:s}{:s}'.format(
-            output_path, splitext(basename(content_path))[0],
-            splitext(basename(style_path))[0], save_ext
-        )
+        if args.style_dir:
+            output_name = '{:s}/{:s}_stylized_{:s}{:s}'.format(
+                output_path, splitext(basename(content_path))[0],
+                splitext(basename(style_path))[0], save_ext
+            )
+        elif args.style:
+            output_name = '{:s}/{:s}{:s}'.format(
+                output_path, splitext(basename(content_path))[0], save_ext
+            )
+
         from PIL import Image
         # Add 0.5 after unnormalizing to [0, 255] to round to nearest integer
         ndarr = output.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to('cpu', torch.uint8).numpy()
