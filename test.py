@@ -90,7 +90,7 @@ args = parser.parse_args()
 # Advanced options
 content_size=512
 style_size=512
-crop='store_true'
+crop='False'
 save_ext='.png'
 output_path=args.output
 preserve_color='store_true'
