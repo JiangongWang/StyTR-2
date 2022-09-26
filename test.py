@@ -169,10 +169,11 @@ for content_path in content_paths:
         print(content_path)
        
       
-        content_tf1 = content_transform()       
-        content = content_tf(Image.open(content_path).convert("RGB"))
+        content_tf1 = content_transform()
+        content=Image.open(content_path).convert("RGB")
+        h,w,c=np.shape(content)
+        content = content_tf(content)
 
-        h,w,c=np.shape(content)    
         style_tf1 = style_transform(h,w)
         style = style_tf(Image.open(style_path).convert("RGB"))
 
@@ -183,12 +184,10 @@ for content_path in content_paths:
         with torch.no_grad():
             output, _, _, _, _= network(content,style) 
         output = output.cpu()
-                
+
         output_name = '{:s}/{:s}_stylized_{:s}{:s}'.format(
             output_path, splitext(basename(content_path))[0],
             splitext(basename(style_path))[0], save_ext
         )
- 
-        save_image(output, output_name)
-   
 
+        save_image(output, output_name, resize=(w,h))
